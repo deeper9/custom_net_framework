@@ -83,8 +83,8 @@ private:
     uint32_t m_elapse = 0;         //程序启动开始到现在的毫秒数
     uint32_t m_threadId = 0;       //线程id
     uint32_t m_fiberId = 0;        //协程id
-    uint64_t m_time = 0;           // 时间戳
-    std::stringstream m_ss;
+    uint64_t m_time = 0;           //时间戳
+    std::stringstream m_ss;        //消息 
 
     std::shared_ptr<Logger> m_logger;
     LogLevel::Level m_level;
@@ -133,7 +133,7 @@ public:
     typedef std::shared_ptr<LogAppender> ptr;
     virtual ~LogAppender() {}
 
-    virtual void log (std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) = 0;
+    virtual void log(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) = 0;
 
     void setFormatter(LogFormatter::ptr formatter) { m_formatter = formatter; }
     LogFormatter::ptr getFormatter() const { return m_formatter; }

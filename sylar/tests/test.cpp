@@ -15,8 +15,6 @@ int main(int argc, char** argv)
     file_appender->setLevel(sylar::LogLevel::Level::ERROR);
     logger->addAppender(file_appender);
 
-    
-
     SYLAR_LOG_INFO(logger) << "test macro";
     SYLAR_LOG_ERROR(logger) << "test macro error";
 

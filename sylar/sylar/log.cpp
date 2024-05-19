@@ -1,5 +1,4 @@
 #include "log.h"
-#include <map>
 #include <functional>
 #include <time.h>
 #include <string.h>
@@ -326,11 +325,12 @@ std::string LogFormatter::format(std::shared_ptr<Logger> logger, LogLevel::Level
     return ss.str();
 }
 
+//%d{%Y-%m-%d %H:%M:%S}%T%t%T%F%T[%p]%T[%c]%T%f:%l%T%m%n
 void LogFormatter::init()
 {
-    // str, format, type
+    // str, format, type  type=0表示错误或者输出符号，type=1表示格式化内容
     std::vector<std::tuple<std::string, std::string, int>> vec;
-    std::string nstr;
+    std::string nstr; // 保存符号 [,:,]
     for (size_t i = 0; i < m_pattern.size(); ++i)
     {
         if (m_pattern[i] != '%')
@@ -351,9 +351,10 @@ void LogFormatter::init()
         size_t fmt_begin = 0;
 
         std::string str;
-        std::string fmt;
+        std::string fmt; // 保存模板，如时间模板 %Y-%m-%d %H:%M:%S
         while (n < m_pattern.size())
         {
+            // 模板参数
             if(!fmt_status && (!isalpha(m_pattern[n]) && m_pattern[n] != '{'
                     && m_pattern[n] != '}')) {
                 str = m_pattern.substr(i + 1, n - i - 1);
@@ -394,7 +395,6 @@ void LogFormatter::init()
                 vec.push_back(std::make_tuple(nstr, std::string(), 0));
                 nstr.clear();
             }
-            // str = m_pattern.substr(i + 1, n - i - 1);
             vec.push_back(std::make_tuple(str, fmt, 1));
             i = n - 1;
         }
@@ -404,16 +404,6 @@ void LogFormatter::init()
             m_error = true;
             vec.push_back(std::make_tuple("<<pattern_error>>", fmt, 0));
         }
-        // else if (fmt_status == 2)
-        // {
-        //     if (!nstr.empty())
-        //     {
-        //         vec.push_back(std::make_tuple(nstr, std::string(), 0));
-        //         nstr.clear();
-        //     }
-        //     vec.push_back(std::make_tuple(str, fmt, 1));
-        //     i = n - 1;
-        // }
     }
 
     if (!nstr.empty())
@@ -448,6 +438,7 @@ void LogFormatter::init()
         else 
         {
             auto it = s_format_items.find(std::get<0>(i));
+            // 解析参数不存在
             if (it == s_format_items.end())
             {
                 m_items.push_back(FormatItem::ptr(new StringFormatItem("<<error_format %" + std::get<0>(i) + ">>")));
