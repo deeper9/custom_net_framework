@@ -316,6 +316,7 @@ public:
     }
 
     const T getValue() const { return m_val; }
+
     void setValue(const T& val) 
     { 
         if (val == m_val)
@@ -361,6 +362,7 @@ public:
     static typename ConfigVar<T>::ptr Lookup(const std::string& name, 
         const T& default_vale, const std::string& description = "")
     {  
+
         auto it = s_datas.find(name);
         if (it != s_datas.end())
         {
