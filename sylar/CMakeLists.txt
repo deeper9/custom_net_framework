@@ -21,7 +21,6 @@ set(LIB_SRC
 )
 # 生成库
 add_library(sylar SHARED ${LIB_SRC})
-
 # 生成测试文件
 add_executable(test tests/test.cpp)
 add_dependencies(test sylar)

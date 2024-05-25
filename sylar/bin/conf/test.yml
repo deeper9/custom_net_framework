@@ -5,6 +5,9 @@ logs:
       appender: 
           - type: FileLogAppender
             path: log.txt
+      appenders: 
+          - type: FileLogAppender
+            file: root.txt
           - type: StdoutLogAppender
     - name: system
       level: debug
@@ -12,4 +15,8 @@ logs:
       appender: 
           - type: FileLogAppender
             path: log.txt
+      appenders: 
+          - type: FileLogAppender
+            file: system.txt
+            formatter: "%d%T[%p]%T%m%n"
           - type: StdoutLogAppender
