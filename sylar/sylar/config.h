@@ -404,6 +404,8 @@ public:
     static void LoadFromYaml(const YAML::Node& root);
     static ConfigVarBase::ptr LookupBase(const std::string& name);
 private:
+    // 从静态变量换成静态函数获取，是由于各个全局变量或者静态变量在初始化时无法保证顺序
+    // 从静态函数中获取可以保证s_datas已初始化
     static ConfigVarMap& GetDatas(){
         static ConfigVarMap s_datas;
         return s_datas;

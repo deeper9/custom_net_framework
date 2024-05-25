@@ -590,6 +590,7 @@ Logger::ptr LoggerManager::getLogger(const std::string& name)
     return logger;
 }
 
+// 保证在程序启动时有默认的日志格式定义
 struct LogAppenderDefine
 {
     int type = 0; // 1 file, 2 stdout
@@ -726,6 +727,7 @@ struct LogIniter
 {
     LogIniter()
     {
+        // 0xF1E231随机，保证唯一即可
         g_log_defines->addListener(0xF1E231, [](const std::set<LogDefine>& old_value,
                 const std::set<LogDefine>& new_value){
             SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << "on_logger_conf_changed";
@@ -794,6 +796,17 @@ struct LogIniter
     }
 };
 
+// 转成yaml格式
+std::string LoggerManager::toYamlString() {
+    YAML::Node node;
+    for(auto& i : m_loggers) {
+        node.push_back(YAML::Load(i.second->toYamlString()));
+    }
+    std::stringstream ss;
+    ss << node;
+    return ss.str();
+}
+// 保证在main函数启动前初始化
 static LogIniter __log_init;
 
 void LoggerManager::init()

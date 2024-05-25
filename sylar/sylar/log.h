@@ -227,7 +227,7 @@ public:
 
     void init();
 
-    std::string toYamlstring();
+    std::string toYamlString();
     Logger::ptr getRoot() const { return m_root; }
 private:
     std::map<std::string, Logger::ptr> m_loggers;

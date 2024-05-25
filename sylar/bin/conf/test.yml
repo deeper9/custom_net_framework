@@ -2,9 +2,6 @@ logs:
     - name: root
       level: info
       formatter: "%d%T%m%n"
-      appender: 
-          - type: FileLogAppender
-            path: log.txt
       appenders: 
           - type: FileLogAppender
             file: root.txt
@@ -12,9 +9,6 @@ logs:
     - name: system
       level: debug
       formatter: "%d%T%m%n"
-      appender: 
-          - type: FileLogAppender
-            path: log.txt
       appenders: 
           - type: FileLogAppender
             file: system.txt
