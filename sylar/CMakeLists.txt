@@ -18,17 +18,29 @@ set(LIB_SRC
     sylar/log.cpp
     sylar/util.cpp
     sylar/config.cpp
+    sylar/thread.cpp
 )
 # 生成库
 add_library(sylar SHARED ${LIB_SRC})
+
+set(LIB_LIB
+    sylar
+    pthread
+    yaml-cpp
+)
+
 # 生成测试文件
 add_executable(test tests/test.cpp)
 add_dependencies(test sylar)
-target_link_libraries(test sylar yaml-cpp)
+target_link_libraries(test ${LIB_LIB})
 
 add_executable(test_config tests/test_config.cpp)
 add_dependencies(test_config sylar)
-target_link_libraries(test_config sylar yaml-cpp)
+target_link_libraries(test_config ${LIB_LIB})
+
+add_executable(test_thread tests/test_thread.cpp)
+add_dependencies(test_thread sylar)
+target_link_libraries(test_thread ${LIB_LIB})
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/LIB)
