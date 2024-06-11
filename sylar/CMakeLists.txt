@@ -19,6 +19,7 @@ set(LIB_SRC
     sylar/util.cpp
     sylar/config.cpp
     sylar/thread.cpp
+    sylar/fiber.cpp
 )
 # 生成库
 add_library(sylar SHARED ${LIB_SRC})
