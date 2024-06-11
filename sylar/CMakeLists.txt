@@ -42,5 +42,9 @@ add_executable(test_thread tests/test_thread.cpp)
 add_dependencies(test_thread sylar)
 target_link_libraries(test_thread ${LIB_LIB})
 
+add_executable(test_util tests/test_util.cpp)
+add_dependencies(test_util sylar)
+target_link_libraries(test_util ${LIB_LIB})
+
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/LIB)
