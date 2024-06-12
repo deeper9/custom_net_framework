@@ -15,11 +15,12 @@ public:
     typedef std::shared_ptr<Fiber> ptr;
 
     enum State {
-        INIT,
-        HOLD,
-        EXEC,
-        TERM,
-        READY
+        INIT,       // 协程刚被创建，未开始执行
+        HOLD,       // 正在等待某些条件满足或外部唤醒，此状态下协程不执行，通常是等待io或其他异步事件
+        EXEC,       // 协程正在执行或者即将执行
+        TERM,       // 执行完成并终止
+        READY,      // 准备就绪，通常表示等待被分配cpu时间
+        EXCEPT    // 异常结束
     };
     Fiber(std::function<void()> cb, size_t stacksize = 0);
     ~Fiber();
@@ -30,6 +31,8 @@ public:
     void swapIn(); 
     // 切换到后台
     void swapOut();
+
+    uint64_t getId() const { return m_id; }
 
 public:
     // 设置当前协程
@@ -44,6 +47,7 @@ public:
     static uint64_t TotalFibers(); 
     // 
     static void MainFunc();
+    static uint64_t GetFiberId();
 
 private:
     Fiber();

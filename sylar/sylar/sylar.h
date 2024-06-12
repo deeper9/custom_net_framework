@@ -7,5 +7,6 @@
 #include "config.h"
 #include "sylar/singleton.h"
 #include "thread.h"
+#include "fiber.h"
 
 #endif 

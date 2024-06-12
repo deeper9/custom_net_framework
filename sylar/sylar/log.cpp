@@ -132,6 +132,17 @@ public:
     }
 };
 
+class ThreadNameFormatItem : public LogFormatter::FormatItem
+{
+public:
+    ThreadNameFormatItem(const std::string& fmt = "") {} 
+    virtual void format(std::ostream& os, std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) override
+    {
+        os << event->getThreadName(); 
+    }
+};
+
+
 class FiberIdFormatItem : public LogFormatter::FormatItem
 {
 public:
@@ -222,13 +233,15 @@ public:
 
 LogEvent::LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level, 
         const char* file, int32_t line, uint32_t elapse,
-        uint32_t thread_id, uint32_t fiber_id, uint64_t time)
+        uint32_t thread_id, uint32_t fiber_id, uint64_t time,
+        const std::string& thread_name)
     : m_file(file)
     , m_line(line)
     , m_elapse(elapse)
     , m_threadId(thread_id)
     , m_fiberId(fiber_id)
     , m_time(time)
+    , m_threadName(thread_name)
     , m_logger(logger)
     , m_level(level)
 {
@@ -239,7 +252,7 @@ Logger::Logger(const std::string& name)
     : m_name(name)
     , m_level(LogLevel::Level::DEBUG)
 {
-    m_formatter.reset(new LogFormatter("%d{%Y-%m-%d %H:%M:%S}%T%t%T%F%T[%p]%T[%c]%T%f:%l%T%m%n"));
+    m_formatter.reset(new LogFormatter("%d{%Y-%m-%d %H:%M:%S}%T%t%T%N%T%F%T[%p]%T[%c]%T%f:%l%T%m%n"));
 }
 
 void Logger::addAppender(LogAppender::ptr appender)
@@ -570,6 +583,7 @@ void LogFormatter::init()
         XX(l, LineFormatItem),
         XX(T, TabFormatItem),
         XX(F, FiberIdFormatItem),
+        XX(N, ThreadNameFormatItem),
 #undef XX
     };
 
