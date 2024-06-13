@@ -20,6 +20,9 @@ set(LIB_SRC
     sylar/config.cpp
     sylar/thread.cpp
     sylar/fiber.cpp
+    sylar/lock.cpp
+    sylar/mutex.cpp
+    sylar/scheduler.cpp
 )
 # 生成库
 add_library(sylar SHARED ${LIB_SRC})
