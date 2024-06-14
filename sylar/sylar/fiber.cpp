@@ -2,6 +2,7 @@
 #include "config.h"
 #include "macro.h"
 #include "log.h"
+#include "scheduler.h"
 #include <atomic>
 
 namespace sylar
@@ -115,16 +116,32 @@ void Fiber::swapIn()
     SYLAR_ASSERT(m_state != EXEC);
     m_state = EXEC;
 
-    if (swapcontext(&t_threadFiber->m_ctx, &m_ctx)){
+    if (swapcontext(&Scheduler::GetMainFiber()->m_ctx, &m_ctx)){
         SYLAR_ASSERT2(false, "swapcontext");
-    }
+    } 
 }
 void Fiber::swapOut()
 {
     // 当前协程切换到后台，一切子协程都由主协程调度，所以切换当前执行协程为主协程
-    SetThis(t_threadFiber.get());
+    if (this != Scheduler::GetMainFiber()) {
+        SetThis(Scheduler::GetMainFiber());
+        if (swapcontext(&m_ctx, &Scheduler::GetMainFiber()->m_ctx)) {
+            SYLAR_ASSERT2(false, "swapcontext");
+        }
+    } else {
+        SetThis(t_threadFiber.get());
+        if (swapcontext(&m_ctx, &t_threadFiber->m_ctx)) {
+            SYLAR_ASSERT2(false, "swapcontext");
+        }
+    }
+}
 
-    if (swapcontext(&m_ctx, &t_threadFiber->m_ctx)) {
+void Fiber::call()
+{
+    SetThis(this);
+    m_state = EXEC;
+    SYLAR_LOG_ERROR(g_logger) << getId();
+    if (swapcontext(&t_threadFiber->m_ctx, &m_ctx)) {
         SYLAR_ASSERT2(false, "swapcontext");
     }
 }
@@ -178,7 +195,10 @@ void Fiber::MainFunc()
         cur->m_state = TERM;
     } catch(std::exception& ex) {
         cur->m_state = EXCEPT;
-        SYLAR_LOG_ERROR(g_logger) << "Fiber Except: " << ex.what();
+        SYLAR_LOG_ERROR(g_logger) << "Fiber Except: " << ex.what()
+            << " fiber id=" << cur->getId()
+            << std::endl
+            << sylar::BacktraceToString();
     } catch (...) {
         cur->m_state = EXCEPT;
         SYLAR_LOG_ERROR(g_logger) << "Fiber Except";
@@ -189,7 +209,7 @@ void Fiber::MainFunc()
     cur.reset();
     raw_ptr->swapOut();
     // swapout后直接切换到主协程，不会执行后续
-    SYLAR_ASSERT2(false, "never reach");
+    SYLAR_ASSERT2(false, "never reach fiber_id=" + std::to_string(raw_ptr->getId()));
 }
 
 uint64_t Fiber::GetFiberId()

@@ -71,6 +71,11 @@ void Scheduler::start()
             m_name + "_" + std::to_string(i)));
         m_threadIds.push_back(m_threads[i]->getId());
     }
+    lock.unlock();
+    if (m_rootFiber) {
+        m_rootFiber->call();
+        SYLAR_LOG_INFO(g_logger) << "call out" << m_rootFiber->getState();
+    }
 }
 
 // 两种情况：
@@ -119,6 +124,7 @@ void Scheduler::setThis()
 
 void Scheduler::run()
 {
+    SYLAR_LOG_INFO(g_logger) << "sc run";
     setThis();
     if (sylar::GetThreadId() != m_rootThread) {
         t_fiber = Fiber::GetThis().get();
@@ -200,7 +206,7 @@ void Scheduler::run()
             idle_fiber->swapIn();
             --m_idleThreadCount;
             if (idle_fiber->getState() != Fiber::TERM
-                || idle_fiber->getState() != Fiber::EXCEPT) {
+                && idle_fiber->getState() != Fiber::EXCEPT) {
                 idle_fiber->m_state = Fiber::HOLD;
             } 
             --m_idleThreadCount;
@@ -215,7 +221,9 @@ void Scheduler::tickle()
 
 bool Scheduler::stopping()
 {
-    return true;
+    MutexType::Lock lock(m_mutex);
+    return m_autoStop && m_stopping
+        && m_fibers.empty() && m_activeThreadCount == 0;
 }
 
 void Scheduler::idle()
