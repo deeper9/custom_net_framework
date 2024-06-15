@@ -22,7 +22,7 @@ Scheduler::Scheduler(size_t threads, bool use_caller, const std::string& name)
         SYLAR_ASSERT(GetThis() == nullptr);
         t_scheduler = this;
 
-        m_rootFiber.reset(new Fiber(std::bind(&Scheduler::run, this)));
+        m_rootFiber.reset(new Fiber(std::bind(&Scheduler::run, this), 0, true));
         sylar::Thread::SetName(m_name);
 
         t_fiber = m_rootFiber.get();
@@ -158,6 +158,7 @@ void Scheduler::run()
                 ft = *it;
                 tickle_me = true;
                 m_fibers.erase(it);
+                break;
             }
         }
 

@@ -50,7 +50,7 @@ Fiber::Fiber()
 }
 
 // 创建子协程调用的构造函数
-Fiber::Fiber(std::function<void()> cb, size_t stacksize)
+Fiber::Fiber(std::function<void()> cb, size_t stacksize, bool use_caller)
     : m_id(++s_fiber_id)
     , m_cb(cb)
 {
@@ -64,8 +64,10 @@ Fiber::Fiber(std::function<void()> cb, size_t stacksize)
     m_ctx.uc_link = nullptr;
     m_ctx.uc_stack.ss_sp = m_stack;
     m_ctx.uc_stack.ss_size = m_stacksize;
-
-    makecontext(&m_ctx, &Fiber::MainFunc, 0);
+    if (!use_caller)
+        makecontext(&m_ctx, &Fiber::MainFunc, 0);
+    else 
+        makecontext(&m_ctx, &Fiber::CallerMainFunc, 0);
 }
 
 Fiber::~Fiber()
@@ -123,17 +125,11 @@ void Fiber::swapIn()
 void Fiber::swapOut()
 {
     // 当前协程切换到后台，一切子协程都由主协程调度，所以切换当前执行协程为主协程
-    if (this != Scheduler::GetMainFiber()) {
-        SetThis(Scheduler::GetMainFiber());
-        if (swapcontext(&m_ctx, &Scheduler::GetMainFiber()->m_ctx)) {
-            SYLAR_ASSERT2(false, "swapcontext");
-        }
-    } else {
-        SetThis(t_threadFiber.get());
-        if (swapcontext(&m_ctx, &t_threadFiber->m_ctx)) {
-            SYLAR_ASSERT2(false, "swapcontext");
-        }
+    SetThis(Scheduler::GetMainFiber());
+    if (swapcontext(&m_ctx, &Scheduler::GetMainFiber()->m_ctx)) {
+        SYLAR_ASSERT2(false, "swapcontext");
     }
+
 }
 
 void Fiber::call()
@@ -142,6 +138,14 @@ void Fiber::call()
     m_state = EXEC;
     SYLAR_LOG_ERROR(g_logger) << getId();
     if (swapcontext(&t_threadFiber->m_ctx, &m_ctx)) {
+        SYLAR_ASSERT2(false, "swapcontext");
+    }
+}
+
+void Fiber::back()
+{
+    SetThis(t_threadFiber.get());
+    if (swapcontext(&m_ctx, &t_threadFiber->m_ctx)) {
         SYLAR_ASSERT2(false, "swapcontext");
     }
 }
@@ -208,6 +212,33 @@ void Fiber::MainFunc()
     auto raw_ptr = cur.get();
     cur.reset();
     raw_ptr->swapOut();
+    // swapout后直接切换到主协程，不会执行后续
+    SYLAR_ASSERT2(false, "never reach fiber_id=" + std::to_string(raw_ptr->getId()));
+}
+
+void Fiber::CallerMainFunc()
+{
+    Fiber::ptr cur = GetThis();
+    SYLAR_ASSERT(cur);
+    try {
+        cur->m_cb();
+        cur->m_cb = nullptr;
+        cur->m_state = TERM;
+    } catch(std::exception& ex) {
+        cur->m_state = EXCEPT;
+        SYLAR_LOG_ERROR(g_logger) << "Fiber Except: " << ex.what()
+            << " fiber id=" << cur->getId()
+            << std::endl
+            << sylar::BacktraceToString();
+    } catch (...) {
+        cur->m_state = EXCEPT;
+        SYLAR_LOG_ERROR(g_logger) << "Fiber Except";
+    }
+    // 执行结束后协程结束不会主动切换到主协程
+    // Fiber::ptr cur = GetThis();给当前协程引用计数+1，导致不会被析构
+    auto raw_ptr = cur.get();
+    cur.reset();
+    raw_ptr->back();
     // swapout后直接切换到主协程，不会执行后续
     SYLAR_ASSERT2(false, "never reach fiber_id=" + std::to_string(raw_ptr->getId()));
 }

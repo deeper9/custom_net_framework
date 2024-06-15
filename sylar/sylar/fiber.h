@@ -24,7 +24,7 @@ public:
         READY,      // 准备就绪，通常表示等待被分配cpu时间
         EXCEPT    // 异常结束
     };
-    Fiber(std::function<void()> cb, size_t stacksize = 0);
+    Fiber(std::function<void()> cb, size_t stacksize = 0, bool use_caller = false);
     ~Fiber();
 
     // 重置协程函数并重置状态，INIT,TERM
@@ -35,6 +35,7 @@ public:
     void swapOut();
     // 相当于swapIn，把当前协程强行切换到目标协程
     void call();
+    void back();
     State getState() const { return m_state; }
 
     uint64_t getId() const { return m_id; }
@@ -52,6 +53,7 @@ public:
     static uint64_t TotalFibers(); 
     // 线程主协程不会进入
     static void MainFunc();
+    static void CallerMainFunc();
     static uint64_t GetFiberId();
 
 private:
