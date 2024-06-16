@@ -5,7 +5,7 @@
 #include "util.h"
 #include "log.h"
 #include "config.h"
-#include "sylar/singleton.h"
+#include "singleton.h"
 #include "thread.h"
 #include "fiber.h"
 #include "scheduler.h"
