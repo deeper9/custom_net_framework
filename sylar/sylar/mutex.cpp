@@ -1,49 +1,74 @@
 #include "mutex.h"
+#include "macro.h"
+#include "scheduler.h"
+#include <stdexcept>
 
-namespace sylar
-{
+namespace sylar {
 
-Mutex::Mutex() {
-    pthread_mutex_init(&m_mutex, nullptr);
+Semaphore::Semaphore(uint32_t count) {
+    if(sem_init(&m_semaphore, 0, count)) {
+        throw std::logic_error("sem_init error");
+    }
 }
 
-Mutex::~Mutex() {
-    pthread_mutex_destroy(&m_mutex);
+Semaphore::~Semaphore() {
+    sem_destroy(&m_semaphore);
 }
 
-void Mutex::lock()
-{
-    pthread_mutex_lock(&m_mutex);
+void Semaphore::wait() {
+    if(sem_wait(&m_semaphore)) {
+        throw std::logic_error("sem_wait error");
+    }
 }
 
-void Mutex::unlock()
-{
-    pthread_mutex_unlock(&m_mutex);
+void Semaphore::notify() {
+    if(sem_post(&m_semaphore)) {
+        throw std::logic_error("sem_post error");
+    }
 }
 
-RWMutex::RWMutex() 
-{
-    pthread_rwlock_init(&m_lock, nullptr);
+FiberSemaphore::FiberSemaphore(size_t initial_concurrency)
+    :m_concurrency(initial_concurrency) {
 }
 
-RWMutex::~RWMutex() 
-{
-    pthread_rwlock_destroy(&m_lock);
+FiberSemaphore::~FiberSemaphore() {
+    SYLAR_ASSERT(m_waiters.empty());
 }
 
-void RWMutex::rdlock() 
-{
-    pthread_rwlock_rdlock(&m_lock);
+bool FiberSemaphore::tryWait() {
+    SYLAR_ASSERT(Scheduler::GetThis());
+    {
+        MutexType::Lock lock(m_mutex);
+        if(m_concurrency > 0u) {
+            --m_concurrency;
+            return true;
+        }
+        return false;
+    }
 }
 
-void RWMutex::wrlock() 
-{
-    pthread_rwlock_wrlock(&m_lock);
+void FiberSemaphore::wait() {
+    SYLAR_ASSERT(Scheduler::GetThis());
+    {
+        MutexType::Lock lock(m_mutex);
+        if(m_concurrency > 0u) {
+            --m_concurrency;
+            return;
+        }
+        m_waiters.push_back(std::make_pair(Scheduler::GetThis(), Fiber::GetThis()));
+    }
+    Fiber::YieldToHold();
 }
 
-void RWMutex::unlock() 
-{
-    pthread_rwlock_unlock(&m_lock);
+void FiberSemaphore::notify() {
+    MutexType::Lock lock(m_mutex);
+    if(!m_waiters.empty()) {
+        auto next = m_waiters.front();
+        m_waiters.pop_front();
+        next.first->schedule(next.second);
+    } else {
+        ++m_concurrency;
+    }
 }
 
 }

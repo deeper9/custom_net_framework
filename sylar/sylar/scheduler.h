@@ -68,9 +68,9 @@ public:
         {
             MutexType::Lock lock(m_mutex);
             while (begin != end) {
-                need_tickle = schedulerNoLock(&*begin) || need_tickle;
+                need_tickle = schedulerNoLock(&*begin, -1) || need_tickle;
+                ++begin;
             }
-            ++begin;
         }
         if (need_tickle) {
             tickle();

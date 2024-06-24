@@ -5,7 +5,7 @@
 #include <functional>
 #include <memory>
 #include <string>
-#include "lock.h"
+#include "mutex.h"
 
 namespace sylar
 {

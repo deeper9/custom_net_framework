@@ -18,18 +18,21 @@ set(LIB_SRC
     sylar/log.cpp
     sylar/util.cpp
     sylar/config.cpp
+    sylar/hook.cpp
     sylar/thread.cpp
     sylar/fiber.cpp
-    sylar/lock.cpp
     sylar/mutex.cpp
     sylar/scheduler.cpp
     sylar/iomanager.cpp
+    sylar/timer.cpp
 )
 # 生成库
 add_library(sylar SHARED ${LIB_SRC})
+#find_library()
 
 set(LIB_LIB
     sylar
+    dl
     pthread
     yaml-cpp
 )
@@ -62,6 +65,10 @@ target_link_libraries(test_scheduler ${LIB_LIB})
 add_executable(test_iomanager tests/test_iomanager.cpp)
 add_dependencies(test_iomanager sylar)
 target_link_libraries(test_iomanager ${LIB_LIB})
+
+add_executable(test_hook tests/test_hook.cpp)
+add_dependencies(test_hook sylar)
+target_link_libraries(test_hook ${LIB_LIB})
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/LIB)
