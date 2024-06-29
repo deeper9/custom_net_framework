@@ -4,6 +4,7 @@
 #include <memory>
 #include "mutex.h"
 #include "iomanager.h"
+#include "singleton.h"
 
 namespace sylar
 {
@@ -18,7 +19,7 @@ public:
     bool init();
     bool isInit() const { return m_isInit; }
     bool isSocket() const { return m_isSocket; }
-    bool isClosed() const { return m_isClosed; }
+    bool isClose() const { return m_isClosed; }
     bool close();
 
     void setUserNonblock(bool v) { m_userNonblock = v; }
@@ -58,6 +59,8 @@ private:
     RWMutexType m_mutex;
     std::vector<FdCtx::ptr> m_datas;
 };
+
+typedef Singleton<FdManager> FdMgr;
 
 }
 
