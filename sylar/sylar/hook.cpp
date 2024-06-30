@@ -42,6 +42,9 @@ void hook_init() {
     if (is_inited) {
         return ;
     }
+// 函数原型：void *dlsym(void *handle, const char *symbol);
+// 查找函数地址的符号，handle表示查找符号指定的库，symbol要查找的符号名称
+// dlsym返回void*，(name ## _fun)将其转换为指定的函数指针
 #define XX(name) name ## _f = (name ## _fun)dlsym(RTLD_NEXT, #name);
     HOOK_FUN(XX)
 #undef XX
@@ -93,6 +96,8 @@ static ssize_t do_io(int fd, OriginFun fun, const char* hook_fun_name,
     }
 
     if (ctx->isClose()) {
+        // "Bad file descriptor"，即无效的文件描述符
+        // 出现情景：试图操作一个无效的文件描述符；试图在一个已经关闭的文件描述符上进行读写操作
         errno = EBADF;
         return -1;
     }
@@ -105,9 +110,12 @@ static ssize_t do_io(int fd, OriginFun fun, const char* hook_fun_name,
 
 retry:
     ssize_t n = fun(fd, std::forward<Args>(args)...);
-    while (n == 1 && errno == EINTR) {
+    // 长时间运行的系统调用（如 read、write 等）可能会被信号处理程序中断
+    // 所以需要循环调用直到成功
+    while (n == -1 && errno == EINTR) {
         n = fun(fd, std::forward<Args>(args)...);
     }
+    // EAGAIN表示非阻塞操作当前无法完成，但稍后可能会成功
     if (n == -1 && errno == EAGAIN) {
         SYLAR_LOG_DEBUG(g_logger) << "do_io1<" << hook_fun_name << ">";
         sylar::IOManager* iom = sylar::IOManager::GetThis();

@@ -34,7 +34,9 @@ bool FdCtx::init()
     m_recvTimeout = -1;
     m_sendTimeout = -1;
 
+    // 用于存储文件的元数据，获取文件属性
     struct stat fd_stat;
+    // fstat获取与fd相关的文件信息，成功返回0，否则返回-1
     if (-1 == fstat(m_fd, &fd_stat))
     {
         m_isInit = false;
@@ -43,10 +45,12 @@ bool FdCtx::init()
     else 
     {
         m_isInit = true;
+        // S_ISSOCK检查一个文件描述符是否是套接字，是则返回非0，否则返回0
         m_isSocket = S_ISSOCK(fd_stat.st_mode);
     }
 
     if (m_isSocket) {
+        // F_GETFL:用于获取文件描述符的文件状态标志,访问模式和文件状态标志
         int flags = fcntl_f(m_fd, F_GETFL, 0);
         if (!(flags & O_NONBLOCK)) {
             fcntl_f(m_fd, F_SETFL, flags | O_NONBLOCK);
