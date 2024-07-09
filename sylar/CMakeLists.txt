@@ -26,6 +26,7 @@ set(LIB_SRC
     sylar/iomanager.cpp
     sylar/timer.cpp
     sylar/fd_manager.cpp
+    sylar/address.cpp
 )
 # 生成库
 add_library(sylar SHARED ${LIB_SRC})
